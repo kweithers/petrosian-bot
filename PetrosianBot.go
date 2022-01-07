@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	twitch_channels := []string{"gothamchess"}
+	twitch_channels := []string{"chess", "chess24", "gmhikaru", "botezlive", "gothamchess", "gmnaroditsky", "chessbrah", "penguingm1", "maskenissen"}
 	pastas := []string{`Are you kidding ??? What the **** are you talking about man ?`,
 		`You are a biggest looser i ever seen in my life !`,
 		`You was doing PIPI in your pampers when i was beating players much more stronger then you!`,
@@ -24,28 +24,32 @@ func main() {
 
 	rand.Seed(time.Now().Unix())
 	client := twitch.NewClient("petrosianbot", "oauth:abc123")
-	//Flag used to prevent the bot from spamming
-	ready_to_post := true
+
+	//Flags used to prevent the bot from spamming channels
+	ready_to_post := make(map[string]bool)
+
+	//Join each twitch chat specified above
+	for _, ttv := range twitch_channels {
+		client.Join(ttv)
+		ready_to_post[ttv] = true
+	}
 
 	//Whenever a twitch chat message is posted
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		//Check if it contains one of the keywords AND the bot hasn't posted too recently
-		if checkForKeywords(strings.ToLower(message.Message)) && ready_to_post {
+		if checkForKeywords(strings.ToLower(message.Message)) && ready_to_post[message.Channel] {
 			//See the message that contained a keyword
-			fmt.Println(message.Channel, message.User.Name, message.Message)
+			fmt.Println(message.Channel, message.User.Name, message.Time.Year(), message.Time.Month(), message.Time.Day(), message.Time.Hour(), message.Time.Minute(), message.Message)
 			//Craft the response
 			reply := "@" + message.User.Name + " " + pastas[rand.Intn(10)]
 			//Say the response
 			client.Say(message.Channel, reply)
 			//Start a countdown until the bot can post again
-			ready_to_post = false
-			go countdown(&ready_to_post, "1m")
+			ready_to_post[message.Channel] = false
+			go countdown(&ready_to_post, message.Channel, "1m")
 		}
 	})
-	//Join all of the twitch chats specified above
-	for _, ttv := range twitch_channels {
-		client.Join(ttv)
-	}
+
 	//Connect to the IRC server
 	err := client.Connect()
 	if err != nil {
@@ -54,10 +58,10 @@ func main() {
 }
 
 //Make the bot wait before it posts again to prevent spamming
-func countdown(ready_to_post *bool, str string) {
+func countdown(flags *map[string]bool, channel string, str string) {
 	m, _ := time.ParseDuration(str)
 	time.Sleep(m)
-	*ready_to_post = true
+	(*flags)[channel] = true
 }
 
 //Check if the twitch chat message contains one of the keywords
