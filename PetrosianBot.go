@@ -6,11 +6,13 @@ import (
 	"strings"
 	"time"
 
-	"github.com/gempir/go-twitch-irc/v2"
+	"github.com/gempir/go-twitch-irc/v3"
 )
 
 func main() {
-	twitch_channels := []string{"chess", "chess24", "gmhikaru", "botezlive", "gothamchess", "gmnaroditsky", "chessbrah", "penguingm1", "maskenissen"}
+	twitch_channels := []string{"chess", "chess24", "gmhikaru", "imrosen", "gothamchess",
+		"gmnaroditsky", "chessbrah", "penguingm1", "maskenissen", "botezlive", "annacramling",
+		"anna_chess", "akanemsko", "gmbenjaminfinegold", "gmbenjaminbok", "chessweeb"}
 	pastas := []string{`Are you kidding ??? What the **** are you talking about man ?`,
 		`You are a biggest looser i ever seen in my life !`,
 		`You was doing PIPI in your pampers when i was beating players much more stronger then you!`,
@@ -19,8 +21,7 @@ func main() {
 		`Everybody know that i am very good blitz player, i can win anyone in the world in single game!`,
 		`And "w"esley "s"o is nobody for me, just a player who are crying every single time when loosing, ( remember what you say about Firouzja ) !!!`,
 		`Stop playing with my name, i deserve to have a good name during whole my chess carrier,`,
-		`I am Officially inviting you to OTB blitz match with the Prize fund!`,
-		`Both of us will invest 5000$ and winner takes it all!`}
+		`I am Officially inviting you to OTB blitz match with the Prize fund! Both of us will invest 5000$ and winner takes it all!`}
 
 	rand.Seed(time.Now().Unix())
 	client := twitch.NewClient("petrosianbot", "oauth:abc123")
@@ -41,12 +42,13 @@ func main() {
 			//See the message that contained a keyword
 			fmt.Println(message.Channel, message.User.Name, message.Time.Year(), message.Time.Month(), message.Time.Day(), message.Time.Hour(), message.Time.Minute(), message.Message)
 			//Craft the response
-			reply := "@" + message.User.Name + " " + pastas[rand.Intn(10)]
+			reply := "@" + message.User.Name + " " + pastas[rand.Intn(len(pastas))]
+			fmt.Println(reply)
 			//Say the response
 			client.Say(message.Channel, reply)
 			//Start a countdown until the bot can post again
 			ready_to_post[message.Channel] = false
-			go countdown(&ready_to_post, message.Channel, "1m")
+			go countdown(&ready_to_post, message.Channel, "60m")
 		}
 	})
 
@@ -66,5 +68,11 @@ func countdown(flags *map[string]bool, channel string, str string) {
 
 //Check if the twitch chat message contains one of the keywords
 func checkForKeywords(str string) bool {
-	return strings.Contains(str, "pipi") || strings.Contains(str, "pampers") || strings.Contains(str, "tigran") || strings.Contains(str, "petrosian")
+	for _, token := range strings.Split(str, " ") {
+		switch token {
+		case "pipi", "pampers", "tigran", "petrosian":
+			return true
+		}
+	}
+	return false
 }
