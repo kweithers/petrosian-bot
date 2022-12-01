@@ -38,17 +38,19 @@ func main() {
 	//Whenever a twitch chat message is posted
 	client.OnPrivateMessage(func(message twitch.PrivateMessage) {
 		//Check if it contains one of the keywords AND the bot hasn't posted too recently
-		if checkForKeywords(strings.ToLower(message.Message)) && ready_to_post[message.Channel] {
+		if checkForKeywords(strings.ToLower(message.Message)) {
 			//See the message that contained a keyword
 			fmt.Println(message.Channel, message.User.Name, message.Time.Year(), message.Time.Month(), message.Time.Day(), message.Time.Hour(), message.Time.Minute(), message.Message)
-			//Craft the response
-			reply := "@" + message.User.Name + " " + pastas[rand.Intn(len(pastas))]
-			fmt.Println(reply)
-			//Say the response
-			client.Say(message.Channel, reply)
-			//Start a countdown until the bot can post again
-			ready_to_post[message.Channel] = false
-			go countdown(&ready_to_post, message.Channel, "60m")
+			if ready_to_post[message.Channel] {
+				//Craft the response
+				reply := "@" + message.User.Name + " " + pastas[rand.Intn(len(pastas))]
+				fmt.Println(reply)
+				//Say the response
+				client.Say(message.Channel, reply)
+				//Start a countdown until the bot can post again
+				ready_to_post[message.Channel] = false
+				go countdown(&ready_to_post, message.Channel, "60m")
+			}
 		}
 	})
 
